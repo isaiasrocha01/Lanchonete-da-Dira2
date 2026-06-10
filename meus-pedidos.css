@@ -1,0 +1,384 @@
+:root {
+    --primary: #ea1d2c;
+    --title-color: #1d3557;
+    --text-main: #495057;
+    --text-secondary: #6c757d;
+    --header-gradient: linear-gradient(135deg, #213c63);
+--body-bg: linear-gradient(135deg, #1d3557);
+--white: #e8edf3ee;
+    --premium-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    --card-border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background: var(--body-bg);
+    color: var(--text-main);
+    line-height: 1.5;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Header */
+.nav-header {
+    background: var(--header-gradient);
+    padding: 35px 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    color: rgb(255, 254, 254);
+}
+
+.btn-back-menu {
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.9;
+}
+
+.btn-back-menu:hover {
+    opacity: 1;
+}
+
+.welcome-box {
+    margin-top: 20px;
+}
+
+.welcome-box h1 {
+    font-size: 1.8rem;
+    color: white;
+    margin-bottom: 4px;
+}
+
+.welcome-box p {
+    color: rgba(252, 251, 251, 0.8);
+    font-size: 0.95rem;
+}
+
+/* Estatísticas */
+.stats-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin: 30px 0;
+}
+
+.stat-item {
+    background: transparent;
+    padding: 10px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: 0.3s;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.stat-icon {
+    width: 35px;
+    height: 35px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.03);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+.stat-val span {
+    display: block;
+    font-weight: 800;
+    font-size: 1.1rem;
+}
+
+.stat-val small {
+    color: #999;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+/* Cards de Pedido */
+.order-card {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: var(--premium-shadow);
+    border: var(--card-border);
+    backdrop-filter: blur(10px);
+}
+
+.card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.order-title {
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: var(--title-color);
+}
+
+.order-date {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    display: block;
+    margin-top: 4px;
+}
+
+/* Badge de Status iFood Style */
+.status-display {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin: 20px 0;
+    padding: 18px;
+    border-radius: 15px;
+}
+
+.status-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.status-msg {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+/* Lista de Itens */
+.items-summary {
+    margin: 15px 0;
+    border-top: 1px dashed #eee;
+    border-bottom: 1px dashed #eee;
+    padding: 15px 0;
+}
+
+.summary-line {
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    color: #444;
+}
+
+.more-items {
+    color: #999;
+    font-size: 0.8rem;
+    font-style: italic;
+    margin-top: 5px;
+}
+
+/* Meta dados do pedido */
+.order-meta-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.meta-label {
+    font-size: 0.8rem;
+    color: #999;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.meta-value {
+    display: block;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #000;
+}
+
+/* Ações */
+.card-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-order {
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: 0.2s;
+    text-decoration: none;
+}
+
+.btn-details {
+    background: #f0f0f0;
+    color: #444;
+}
+
+.btn-help {
+    background: #e6fcf5;
+    color: var(--green);
+}
+
+.btn-track {
+    background: #f8f0fc;
+    color: var(--purple);
+    grid-column: span 2;
+}
+
+.btn-reorder {
+    background: #fcebeb;
+    color: var(--primary);
+    grid-column: span 2;
+}
+
+/* Modal iFood Style */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 2000;
+    backdrop-filter: blur(5px);
+}
+
+.modal-card {
+    background: var(--white);
+    width: 95%;
+    max-width: 550px;
+    margin: 5vh auto;
+    border-radius: 20px;
+    padding: 30px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+    color: #ccc;
+}
+
+.detail-group {
+    margin-top: 25px;
+}
+
+.detail-group h4 {
+    font-size: 0.85rem;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+}
+
+.customization {
+    font-size: 0.8rem;
+    color: #888;
+    padding-left: 20px;
+    margin-bottom: 15px;
+}
+
+.financial-summary {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 20px;
+}
+
+.fin-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.fin-total {
+    border-top: 1px solid #ddd;
+    margin-top: 10px;
+    padding-top: 10px;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: var(--primary);
+}
+
+/* Loading */
+.loading-state {
+    text-align: center;
+    padding: 100px 0;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #eee;
+    border-top: 4px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 600px) {
+    .stats-overview {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .card-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .btn-track,
+    .btn-reorder {
+        grid-column: span 1;
+    }
+}

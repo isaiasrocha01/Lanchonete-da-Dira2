@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Pedidos | Lanchonete da Dira</title>
+    <link rel="stylesheet" href="/meus-pedidos.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header class="nav-header">
+        <div class="container">
+            <a href="index.html" class="btn-back-menu">
+                <i class="fas fa-chevron-left"></i> Voltar ao Menu
+            </a>
+            <div class="welcome-box">
+                <h1 id="user-greeting">Olá! 👋</h1>
+                <p>Acompanhe seus pedidos e entregas.</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="container dash-main">
+        <section class="stats-overview">
+            <div class="stat-item">
+                <span class="stat-icon"><i class="fas fa-shopping-basket"></i></span>
+                <div class="stat-val">
+                    <span id="count-total">0</span>
+                    <small>Pedidos</small>
+                </div>
+            </div>
+            <div class="stat-item active-orders">
+                <span class="stat-icon"><i class="fas fa-fire"></i></span>
+                <div class="stat-val">
+                    <span id="count-ongoing">0</span>
+                    <small>Em andamento</small>
+                </div>
+            </div>
+            <div class="stat-item delivered-orders">
+                <span class="stat-icon"><i class="fas fa-check-circle"></i></span>
+                <div class="stat-val">
+                    <span id="count-delivered">0</span>
+                    <small>Entregues</small>
+                </div>
+            </div>
+            <div class="stat-item wallet">
+                <span class="stat-icon"><i class="fas fa-wallet"></i></span>
+                <div class="stat-val">
+                    <span id="total-spent">R$ 0,00</span>
+                    <small>Gasto total</small>
+                </div>
+            </div>
+        </section>
+
+        <section id="orders-feed" class="orders-feed">
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <p>Buscando seus lanches...</p>
+            </div>
+        </section>
+    </main>
+
+    <div id="order-details-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>Detalhes do Pedido</h2>
+                <button class="close-modal" onclick="closeDetails()">&times;</button>
+            </div>
+            <div id="modal-content-body" class="modal-body"></div>
+        </div>
+    </div>
+
+    <script src="/meus-pedidos.js"></script>
+</body>
+</html>

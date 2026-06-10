@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - Lanchonete da Dira</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .auth-container { max-width: 600px; margin: 40px auto; padding: 20px; }
+        .auth-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .input-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        h2 { text-align: center; color: var(--primary); margin-bottom: 25px; }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h2>Criar sua Conta</h2>
+            <form id="register-form">
+                <input type="text" id="reg-name" placeholder="Nome Completo" required style="margin-bottom:15px;">
+                <div class="input-row">
+                    <input type="text" id="reg-username" placeholder="Nome de Usuário" required>
+                    <input type="email" id="reg-email" placeholder="E-mail" required>
+                </div>
+                <div class="input-row">
+                    <input type="password" id="reg-password" placeholder="Senha" required>
+                    <input type="password" id="reg-confirm" placeholder="Confirmar Senha" required>
+                </div>
+                <div class="input-row">
+                    <input type="text" id="reg-cep" placeholder="CEP" maxlength="8" onblur="buscarCEPFull()">
+                    <input type="tel" id="reg-phone" placeholder="Telefone">
+                </div>
+                <div class="input-row">
+                    <input type="text" id="reg-address" placeholder="Endereço" required style="flex:3;">
+                    <input type="text" id="reg-number" placeholder="Nº" required style="flex:1;">
+                </div>
+                <div class="input-row">
+                    <input type="text" id="reg-neighborhood" placeholder="Bairro" required>
+                    <input type="text" id="reg-complement" placeholder="Complemento">
+                </div>
+                <input type="text" id="reg-reference" placeholder="Referência" style="margin-bottom:20px;">
+                
+                <button type="submit" class="btn-finish">Finalizar Cadastro</button>
+            </form>
+            <p style="margin-top:20px; text-align:center;">Já tem conta? <a href="/login">Faça login</a></p>
+        </div>
+    </div>
+
+    <script>
+        async function buscarCEPFull() {
+            const cep = document.getElementById('reg-cep').value.replace(/\D/g, '');
+            if (cep.length === 8) {
+                const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                const data = await res.json();
+                if (!data.erro) {
+                    document.getElementById('reg-address').value = data.logradouro || '';
+                    document.getElementById('reg-neighborhood').value = data.bairro || '';
+                }
+            }
+        }
+
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = document.getElementById('reg-password').value;
+            if (password !== document.getElementById('reg-confirm').value) {
+                return alert('As senhas não coincidem!');
+            }
+
+            const formData = {
+                name: document.getElementById('reg-name').value,
+                username: document.getElementById('reg-username').value,
+                email: document.getElementById('reg-email').value,
+                password: password,
+                phone: document.getElementById('reg-phone').value,
+                cep: document.getElementById('reg-cep').value,
+                address: document.getElementById('reg-address').value,
+                number: document.getElementById('reg-number').value,
+                neighborhood: document.getElementById('reg-neighborhood').value
+            };
+
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            if (res.ok) {
+                alert('Cadastro realizado! Agora faça seu login.');
+                window.location.href = '/login';
+            } else {
+                const error = await res.json();
+                alert(error.error);
+            }
+        });
+    </script>
+</body>
+</html>

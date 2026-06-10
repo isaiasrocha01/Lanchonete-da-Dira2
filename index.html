@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <script src="/auth-guard.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="/img/logo.ico" type="image/x-icon">
+    <title>Lanchonete da Dira - Pedidos Online</title>
+    <link rel="stylesheet" href="/style.css">
+    <!-- Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- EmailJS SDK: Responsável por enviar a cópia de segurança para o seu e-mail -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+</head>
+
+<body>
+
+    <header>
+        <div class="container">
+            <div class="header-brand">
+                <img src="/img/logo.png" alt="Logo Lanchonete da Dira" class="logo-img">
+                <h1>Lanchonete da Dira</h1>
+            </div>
+            <div class="header-actions">
+                <div class="cart-icon" onclick="toggleCart()">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span id="cart-count">0</span>
+                </div>
+                <div id="user-menu" class="user-info">
+                    <!-- Preenchido via JavaScript -->
+                    <a href="/login" class="btn-login">Entrar</a>
+                    <a href="/cadastro" class="btn-register">Cadastrar</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container main-layout">
+        <!-- Barra Lateral de Navegação (Fixa à esquerda no Desktop) -->
+        <nav class="sidebar">
+            <ul>
+                <li><a href="#hamburgueres"><i class="fas fa-hamburger"></i> Hambúrgueres</a></li>
+                <li><a href="#bebidas-lata"><i class="fas fa-wine-bottle"></i> Refri Lata</a></li>
+                <li><a href="#bebidas-1l"><i class="fas fa-wine-bottle"></i> Refri 1L</a></li>
+                <li><a href="#bebidas-2l"><i class="fas fa-wine-bottle"></i> Refri 2L</a></li>
+                <li><a href="#aguas"><i class="fas fa-droplet"></i> Águas</a></li>
+                <li><a href="#sucos"><i class="fas fa-apple-whole"></i> Sucos</a></li>
+                <li><a href="#vitaminas"><i class="fas fa-blender"></i> Vitaminas</a></li>
+                <li><a href="#cafes"><i class="fas fa-mug-hot"></i> Cafés</a></li>
+                <li><a href="#cremosas"><i class="fas fa-ice-cream"></i> Cremosas</a></li>
+                <li><a href="#porcoes"><i class="fas fa-utensils"></i> Porções</a></li>
+            </ul>
+        </nav>
+
+        <!-- Menu -->
+        <section id="menu" class="content">
+            <h2 class="category-title">Hambúrgueres</h2>
+            <div class="grid-menu" id="hamburgueres"></div>
+
+            <h2 class="category-title">🥤 Refrigerantes Lata (350 ml)</h2>
+            <div class="grid-menu" id="bebidas-lata"></div>
+
+            <h2 class="category-title">🥤 Refrigerantes 1 Litro</h2>
+            <div class="grid-menu" id="bebidas-1l"></div>
+
+            <h2 class="category-title">🥤 Refrigerantes 2 Litros</h2>
+            <div class="grid-menu" id="bebidas-2l"></div>
+
+            <h2 class="category-title">💧 Águas</h2>
+            <div class="grid-menu" id="aguas"></div>
+
+            <h2 class="category-title">🧃 Sucos</h2>
+            <div class="grid-menu" id="sucos"></div>
+
+            <h2 class="category-title">🥛 Vitaminas</h2>
+            <div class="grid-menu" id="vitaminas"></div>
+
+            <h2 class="category-title">☕ Cafés</h2>
+            <div class="grid-menu" id="cafes"></div>
+
+            <h2 class="category-title">🍫 Bebidas Cremosas</h2>
+            <div class="grid-menu" id="cremosas"></div>
+
+            <h2 class="category-title">Porções</h2>
+            <div class="grid-menu" id="porcoes"></div>
+        </section>
+
+        <!-- Formulário de Cadastro -->
+        <section id="checkout-form" class="card">
+            <h2><i class="fas fa-user-edit"></i> Dados para Entrega</h2>
+            <form id="order-form">
+                <div class="input-group">
+                    <input type="text" id="nome" placeholder="Nome Completo" required>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="cep" placeholder="CEP (Apenas números)" maxlength="8" onblur="buscarCEP()">
+                    <input type="tel" id="telefone" placeholder="Telefone (DDD)" required>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="endereco" placeholder="Endereço" required>
+                    <input type="text" id="numero" placeholder="Nº" required>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="bairro" placeholder="Bairro" readonly required style="flex: 2;">
+                    <input type="text" id="frete-info" placeholder="Frete" readonly
+                        style="flex: 1; font-weight: bold; color: var(--primary);">
+                </div>
+                <div class="input-group">
+                    <input type="text" id="complemento" placeholder="Complemento">
+                    <input type="text" id="referencia" placeholder="Ponto de Referência">
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <!-- Carrinho Lateral/Modal -->
+    <div id="cart-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="toggleCart()">&times;</span>
+            <h2>Seu Carrinho</h2>
+            <div id="cart-items">
+                <p>O carrinho está vazio...</p>
+            </div>
+
+            <div class="summary">
+                <div class="summary-line"><span>Subtotal:</span> <span id="subtotal">R$ 0,00</span></div>
+                <div class="summary-line"><span>Frete:</span> <span id="shipping-price">R$ 0,00</span></div>
+                <div class="summary-line total"><span>Total:</span> <span id="total-price">R$ 0,00</span></div>
+            </div>
+
+            <button class="btn-finish" onclick="finishOrder()">
+                <i class="fab fa-whatsapp"></i> Finalizar Pedido pelo WhatsApp
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Gerenciamento de Produto (Novo/Editar) -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeProductModal()">&times;</span>
+            <h2 id="product-modal-title">Novo Produto</h2>
+            <form id="product-form" style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+                <input type="hidden" id="prod-id">
+                <select id="prod-category" required>
+                    <option value="">Carregando categorias...</option>
+                </select>
+                <input type="text" id="prod-name" placeholder="Nome do Produto" required>
+                <textarea id="prod-description" placeholder="Descrição" rows="3"></textarea>
+                <input type="number" id="prod-price" step="0.01" placeholder="Preço (Ex: 15.50)" required>
+                <label style="font-size: 0.8rem; color: #666;">Ingredientes padrão (que o cliente poderá retirar):</label>
+                <input type="text" id="prod-ingredients" placeholder="Ex: Pão, Carne, Queijo, Alface">
+                
+                <label style="font-size: 0.8rem; color: #666; margin-top: 5px;">Adicionais/Extras (Nome: Preço):</label>
+                <input type="text" id="prod-extras" placeholder="Ex: Ovo: 2.00, Bacon: 3.50, Queijo: 2.00">
+
+                <label style="font-size: 0.8rem; color: #666; margin-top: 5px;">Imagens já enviadas:</label>
+                <select id="prod-library-images">
+                    <option value="">-- Ou escolha da biblioteca --</option>
+                </select>
+
+                <label style="font-size: 0.8rem; color: #666; margin-top: 5px;">Imagem do Produto:</label>
+                <input type="text" id="prod-image" placeholder="URL da Imagem (Ex: http://...)">
+                <input type="file" id="prod-file" accept="image/*" style="border: none; padding: 5px 0;">
+
+                <button type="submit" class="btn-finish" style="background: var(--dark);">
+                    <i class="fas fa-save"></i> Salvar Produto
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Personalização (Sub-página) -->
+    <div id="custom-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCustomModal()">&times;</span>
+            <h2 id="custom-product-name">Personalizar Lanche</h2>
+
+            <p class="modal-subtitle">Remover ingredientes:</p>
+            <div id="custom-ingredients-list" class="ingredients-grid"></div>
+
+            <p id="extras-title" class="modal-subtitle">Adicionais (Opcional):</p>
+            <div id="custom-extras-list" class="ingredients-grid"></div>
+
+            <button class="btn-finish" onclick="confirmAddToCart()" style="background: var(--primary);">Confirmar e
+                Adicionar</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2023 Lanchonete da Dira - Todos os direitos reservados.</p>
+    </footer>
+
+    <script src="/script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Lanchonete da Dira</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .auth-container { max-width: 400px; margin: 100px auto; }
+        .auth-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div id="status-msg" style="display:none; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center; font-size: 0.9rem;"></div>
+        <div class="auth-card">
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const msgBox = document.getElementById('status-msg');
+        if (params.get('msg') === 'expired') {
+            msgBox.style.display = 'block';
+            msgBox.style.backgroundColor = '#fff3cd';
+            msgBox.style.color = '#856404';
+            msgBox.innerText = "Sua sessão expirou por segurança. Faça login novamente.";
+        }
+    </script>
+            <h2 style="margin-bottom: 20px; text-align: center; color: var(--primary);">Entrar</h2>
+            <form id="login-form">
+                <input type="text" id="identifier" placeholder="E-mail ou Nome de Usuário" required style="margin-bottom: 15px;">
+                <input type="password" id="password" placeholder="Senha" required style="margin-bottom: 20px;">
+                <button type="submit" class="btn-finish">Entrar</button>
+            </form>
+            <p style="margin-top: 20px; text-align: center;">Não tem conta? <a href="/cadastro">Cadastre-se</a></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const identifier = document.getElementById('identifier').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier, password })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    // Redirecionamento Inteligente
+                    if (data.user.role === 'ADMIN') {
+                        window.location.href = '/admin/pedidos';
+                    } else {
+                        window.location.href = '/';
+                    }
+                } else {
+                    alert(data.error);
+                }
+            } catch (err) {
+                alert('Erro ao conectar com o servidor');
+            }
+        });
+    </script>
+</body>
+</html>

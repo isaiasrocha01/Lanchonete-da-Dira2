@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Gestão de Pedidos | Lanchonete da Dira</title>
+    <link rel="stylesheet" href="/admin-pedidos.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <header class="admin-header">
+        <div class="container">
+            <h1><i class="fas fa-box-open"></i> Gestão de Pedidos</h1>
+            <a href="/" class="back-link"><i class="fas fa-home"></i> Voltar ao Menu</a>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <!-- Cards de Estatísticas -->
+        <section class="stats-grid">
+            <div class="stat-card total">
+                <i class="fas fa-list-ul"></i>
+                <div>
+                    <h3 id="stat-total">0</h3>
+                    <p>Total</p>
+                </div>
+            </div>
+            <div class="stat-card pending">
+                <i class="fas fa-clock"></i>
+                <div>
+                    <h3 id="stat-pending">0</h3>
+                    <p>Pendentes</p>
+                </div>
+            </div>
+            <div class="stat-card preparing">
+                <i class="fas fa-fire"></i>
+                <div>
+                    <h3 id="stat-preparing">0</h3>
+                    <p>Em Preparo</p>
+                </div>
+            </div>
+            <div class="stat-card shipping">
+                <i class="fas fa-motorcycle"></i>
+                <div>
+                    <h3 id="stat-shipping">0</h3>
+                    <p>Entregando</p>
+                </div>
+            </div>
+            <div class="stat-card completed">
+                <i class="fas fa-check-circle"></i>
+                <div>
+                    <h3 id="stat-completed">0</h3>
+                    <p>Entregues</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filtros e Busca -->
+        <section class="filters-bar">
+            <div class="filter-group">
+                <button class="filter-btn active" data-filter="all">Todos</button>
+                <button class="filter-btn" data-filter="PENDENTE">Recebidos</button>
+                <button class="filter-btn" data-filter="CONFIRMADO">Confirmados</button>
+                <button class="filter-btn" data-filter="EM_PREPARO">Em Preparo</button>
+                <button class="filter-btn" data-filter="SAIU_PARA_ENTREGA">Na Rua</button>
+                <button class="filter-btn" data-filter="ENTREGUE">Entregues</button>
+                <button class="filter-btn" data-filter="CANCELADO">Cancelados</button>
+            </div>
+            <div class="admin-global-actions" style="display: flex; gap: 10px;">
+                <button class="filter-btn" id="btn-toggle-archived" onclick="toggleArchived()" style="background: var(--dark); color: white;">
+                    <i class="fas fa-archive"></i> Ver Arquivados
+                </button>
+                <button class="filter-btn" onclick="clearAllOrders()" style="background: var(--primary); color: white;">
+                    <i class="fas fa-trash-alt"></i> Zerar Pedidos
+                </button>
+            </div>
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="order-search" placeholder="Nome, telefone, pedido ou código...">
+            </div>
+        </section>
+
+        <!-- Grid de Pedidos -->
+        <div id="orders-grid" class="orders-grid">
+            <!-- Pedidos injetados via JS -->
+        </div>
+    </main>
+
+    <!-- Modais -->
+    <div id="modal-details" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2>Detalhes do Pedido <span id="modal-order-id">#000</span></h2>
+                <span class="close-modal" onclick="closeModal('modal-details')">&times;</span>
+            </div>
+            <div id="modal-body" class="modal-body"></div>
+        </div>
+    </div>
+
+    <div id="modal-tracking" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Gerenciar Rastreamento</h2>
+                <span class="close-modal" onclick="closeModal('modal-tracking')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="track-order-id">
+                <label>Link de Rastreamento (Google Maps/Waze/URL):</label>
+                <input type="text" id="track-url" placeholder="https://...">
+                <button onclick="saveTracking()" class="btn-primary">Salvar Rastreio</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/admin-pedidos.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,98 @@
+:root {
+    --primary: #e63946;
+    --secondary: #ffb703;
+    --dark: #1d3557;
+    --bg: #f8f9fa;
+    --white: #ffffff;
+    --shadow: 0 4px 15px rgba(0,0,0,0.08);
+    --pendente: #6c757d; --confirmado: #007bff; --preparo: #fd7e14;
+    --entrega: #6f42c1; --entregue: #28a745; --cancelado: #dc3545;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', 'Segoe UI', sans-serif; }
+body { background-color: var(--bg); color: #333; }
+
+.admin-header { background: var(--dark); color: white; padding: 15px 0; position: sticky; top: 0; z-index: 100; }
+.admin-header .container { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+.back-link { color: white; text-decoration: none; font-weight: 500; font-size: 0.9rem; }
+
+.dashboard-container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+
+/* Estatísticas */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
+.stat-card { background: white; padding: 20px; border-radius: 12px; display: flex; align-items: center; gap: 15px; box-shadow: var(--shadow); }
+.stat-card i { font-size: 2rem; opacity: 0.8; }
+.stat-card h3 { font-size: 1.5rem; }
+.stat-card p { font-size: 0.8rem; color: #666; font-weight: 600; }
+.stat-card.total { border-bottom: 4px solid var(--dark); color: var(--dark); }
+.stat-card.pending { border-bottom: 4px solid var(--pendente); color: var(--pendente); }
+.stat-card.preparing { border-bottom: 4px solid var(--preparo); color: var(--preparo); }
+.stat-card.shipping { border-bottom: 4px solid var(--entrega); color: var(--entrega); }
+.stat-card.completed { border-bottom: 4px solid var(--entregue); color: var(--entregue); }
+
+/* Filtros e Busca */
+.filters-bar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 15px; margin-bottom: 25px; align-items: center; }
+.filter-group { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; }
+.filter-btn { padding: 8px 16px; border-radius: 20px; border: none; background: white; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+.filter-btn.active, .filter-btn:hover { background: var(--dark); color: white; }
+.search-box { position: relative; min-width: 300px; }
+.search-box input { width: 100%; padding: 12px 15px 12px 40px; border: 1px solid #ddd; border-radius: 30px; outline: none; box-shadow: var(--shadow); }
+.search-box i { position: absolute; left: 15px; top: 13px; color: #999; }
+
+/* Cards de Pedido */
+.orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+.order-card { background: white; border-radius: 15px; padding: 20px; box-shadow: var(--shadow); transition: transform 0.2s; border-top: 5px solid #eee; }
+.order-card:hover { transform: translateY(-5px); }
+.order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+.order-num { font-weight: 800; font-size: 1.1rem; color: var(--dark); }
+.badge { padding: 4px 10px; border-radius: 6px; color: white; font-size: 0.7rem; font-weight: bold; }
+
+.info-section { margin-bottom: 15px; }
+.info-section p { font-size: 0.9rem; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+.info-section i { color: #888; width: 15px; }
+.order-value { font-size: 1.2rem; font-weight: 800; color: var(--dark); margin: 15px 0; padding-top: 10px; border-top: 1px dashed #eee; }
+
+/* Ações */
+.order-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
+.btn-sm { padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.75rem; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s; }
+.btn-details { background: #eee; color: #444; }
+.btn-whatsapp { background: #25d366; color: white; text-decoration: none; }
+.btn-status { background: var(--dark); color: white; grid-column: span 2; }
+.btn-motoboy { background: #3498db; color: white; grid-column: span 2; }
+.btn-track { background: var(--secondary); color: var(--dark); grid-column: span 2; }
+
+/* Cores de Status */
+.bg-PENDENTE { background: var(--pendente); }
+.bg-CONFIRMADO { background: var(--confirmado); }
+.bg-EM_PREPARO { background: var(--preparo); }
+.bg-SAIU_PARA_ENTREGA { background: var(--entrega); }
+.bg-ENTREGUE { background: var(--entregue); }
+.bg-CANCELADO { background: var(--cancelado); }
+
+/* Estilo para o Seletor Rápido no Card */
+.status-dropdown {
+    padding: 5px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: white;
+}
+
+/* Modal */
+.modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
+.modal-content { background: white; margin: 10vh auto; padding: 25px; border-radius: 20px; width: 90%; max-width: 500px; }
+.modal-content.large { max-width: 800px; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+.close-modal { cursor: pointer; font-size: 1.5rem; }
+
+.status-grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn-status-change { padding: 15px; border: none; border-radius: 10px; color: white; cursor: pointer; font-weight: bold; opacity: 0.8; transition: 0.3s; }
+.btn-status-change:hover { opacity: 1; transform: scale(1.02); }
+
+@media (max-width: 768px) {
+    .orders-grid { grid-template-columns: 1fr; }
+    .filters-bar { flex-direction: column; align-items: stretch; }
+    .search-box { min-width: 100%; }
+}

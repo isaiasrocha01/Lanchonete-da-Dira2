@@ -1,0 +1,639 @@
+:root {
+    --primary: #e63946; /* Vermelho */
+    --secondary: #ffb703; /* Amarelo */
+    --dark: #1d3557;
+    --light: #f1faee;
+    --white: #ffffff; 
+}
+ 
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+body { 
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+                      url('https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1920&q=80'); /* Fundo rústico (madeira/tijolo) com overlay escuro */
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center;
+    color: #333; 
+    padding-bottom: 50px; 
+}
+
+.container { max-width: 100%; margin: 0 auto; padding: 20px; }
+
+header {
+    background-color: var(--primary);
+    color: var(--white);
+    position: sticky;
+    top: 0;
+    z-index: 1100; /* Header sempre no topo */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+header .container { display: flex; justify-content: space-between; align-items: center; }
+
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Espaço entre a logo e o texto */
+    color: var(--white); /* Garante que o texto seja branco */
+}
+
+.logo-img {
+    height: 60px; /* Tamanho da logo */
+    width: 60px;
+    object-fit: contain; /* Garante que a imagem se ajuste sem cortar */
+    border-radius: 50%; /* Torna a logo circular */
+    background: var(--white); /* Fundo branco para a logo, para se destacar */
+    padding: 2px; /* Pequeno espaçamento interno */
+}
+
+/* Layout com Sidebar */
+.main-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.sidebar {
+    width: 250px;
+    position: sticky; /* Mantém fixo ao rolar */
+    top: 150px; /* Distância maior do topo para criar um respiro */
+    z-index: 1000;
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.sidebar ul { list-style: none; }
+.sidebar ul li a {
+    display: block;
+    padding: 10px;
+    text-decoration: none;
+    color: var(--dark);
+    font-weight: 600;
+    border-radius: 8px;
+    transition: 0.3s;
+    font-size: 0.9rem;
+}
+
+.sidebar ul li a:hover {
+    background: var(--light);
+    color: var(--primary);
+}
+
+.content { flex: 1; }
+
+.cart-icon {
+    background: var(--secondary);
+    padding: 10px 15px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+.cart-icon:active { transform: scale(0.9); }
+
+.category-title {
+    margin: 20px 0;
+    border-left: 5px solid var(--primary);
+    padding: 10px 20px;
+    color: var(--primary);
+    background-color: rgba(255, 255, 255, 0.85); /* Fundo branco com opacidade */
+    border-radius: 0 10px 10px 0; /* Arredonda o canto direito */
+    width: fit-content; /* O fundo acompanha apenas o tamanho do texto */
+}
+
+.grid-menu {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.product-card {
+    background: var(--white);
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.product-img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.product-info h3 { margin-bottom: 5px; }
+.product-price { color: #2d6a4f; font-weight: bold; font-size: 1.2rem; }
+
+.btn-add {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.3s;
+}
+
+.btn-add:hover { background: #c1121f; }
+
+/* Checkout Form */
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.input-group { display: flex; gap: 10px; margin-bottom: 10px; }
+input, select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    outline: none;
+}
+
+/* Modal do Carrinho */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000; /* Modais devem ficar acima do header */
+    left: 0; top: 0; width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 20px;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 15px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.close { float: right; font-size: 28px; cursor: pointer; }
+
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-subtitle {
+    font-weight: bold;
+    margin: 15px 0 10px 0;
+    color: var(--dark);
+    border-bottom: 1px solid #ddd;
+}
+
+.ingredients-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.ingredient-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: #f8f8f8;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.ingredient-item.extra {
+    justify-content: space-between;
+}
+
+.ingredient-item.extra {
+    background: #e9f5db; /* Cor verde clara para extras */
+}
+
+.qty-controls { display: flex; align-items: center; gap: 10px; }
+.qty-btn {
+    background: #ddd;
+    border: none;
+    width: 25px; height: 25px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.summary { margin-top: 20px; background: #f9f9f9; padding: 15px; border-radius: 8px; }
+.summary-line { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.total { font-size: 1.3rem; font-weight: bold; color: var(--primary); border-top: 1px solid #ddd; padding-top: 10px; }
+
+.btn-finish {
+    width: 100%;
+    background: #25d366;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-top: 15px;
+    cursor: pointer;
+}
+
+/* Configuração para Computador (Desktop) */
+@media (min-width: 769px) {
+    .sidebar {
+        position: sticky;
+        top: 115px; 
+    }
+    #checkout-form {
+        width: 380px; /* Largura fixa para o formulário na direita */
+        position: sticky;
+        top: 150px; 
+        flex-shrink: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-layout { flex-direction: column; }
+    .card { margin-top: 20px; } /* Adiciona margem apenas quando empilhado no mobile */
+    .sidebar {
+        width: 100%;
+        position: sticky;
+        top: 130px; /* Um pequeno respiro também no mobile */
+        z-index: 1050;
+        overflow-x: auto;
+        background: white;
+        white-space: nowrap;
+        padding: 10px;
+    }
+    .sidebar ul { display: flex; gap: 10px; }
+    .input-group { flex-direction: column; }
+}:root {
+    --primary: #e63946; /* Vermelho */
+    --secondary: #ffb703; /* Amarelo */
+    --dark: #1d3557;
+    --light: #f1faee;
+    --white: #ffffff;
+}
+ 
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+body { 
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+                      url('https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1920&q=80'); /* Fundo rústico (madeira/tijolo) com overlay escuro */
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center;
+    color: #333; 
+    padding-bottom: 50px; 
+}
+
+.container { max-width: 100%; margin: 0 auto; padding: 20px; }
+
+header {
+    background-color: var(--primary);
+    color: var(--white);
+    position: sticky;
+    top: 0;
+    z-index: 1100; /* Header sempre no topo */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+header .container { display: flex; justify-content: space-between; align-items: center; }
+
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Espaço entre a logo e o texto */
+    color: var(--white); /* Garante que o texto seja branco */
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.user-info {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.btn-login, .btn-register {
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.85rem;
+    padding: 8px 16px;
+    border-radius: 50px;
+    transition: 0.3s;
+}
+
+.btn-login {
+    color: var(--white);
+    border: 1px solid var(--white);
+}
+
+.btn-login:hover {
+    background: var(--white);
+    color: var(--primary);
+}
+
+.btn-register {
+    background: var(--secondary);
+    color: var(--dark);
+}
+
+.btn-register:hover {
+    filter: brightness(0.9);
+}
+
+.logo-img {
+    height: 60px; /* Tamanho da logo */
+    width: 60px;
+    object-fit: contain; /* Garante que a imagem se ajuste sem cortar */
+    border-radius: 50%; /* Torna a logo circular */
+    background: var(--white); /* Fundo branco para a logo, para se destacar */
+    padding: 2px; /* Pequeno espaçamento interno */
+}
+
+/* Layout com Sidebar */
+.main-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.sidebar {
+    width: 250px;
+    position: sticky; /* Mantém fixo ao rolar */
+    top: 150px; /* Distância maior do topo para criar um respiro */
+    z-index: 1000;
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.sidebar ul { list-style: none; }
+.sidebar ul li a {
+    display: block;
+    padding: 10px;
+    text-decoration: none;
+    color: var(--dark);
+    font-weight: 600;
+    border-radius: 8px;
+    transition: 0.3s;
+    font-size: 0.9rem;
+}
+
+.sidebar ul li a:hover {
+    background: var(--light);
+    color: var(--primary);
+}
+
+.content { flex: 1; }
+
+.cart-icon {
+    background: var(--secondary);
+    padding: 10px 15px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+.cart-icon:active { transform: scale(0.9); }
+
+.category-title {
+    margin: 20px 0;
+    border-left: 5px solid var(--primary);
+    padding: 10px 20px;
+    color: var(--primary);
+    background-color: rgba(255, 255, 255, 0.85); /* Fundo branco com opacidade */
+    border-radius: 0 10px 10px 0; /* Arredonda o canto direito */
+    width: fit-content; /* O fundo acompanha apenas o tamanho do texto */
+}
+
+.grid-menu {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.product-card {
+    background: var(--white);
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.product-img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.product-info h3 { margin-bottom: 5px; }
+.product-price { color: #2d6a4f; font-weight: bold; font-size: 1.2rem; }
+
+.btn-add {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.3s;
+}
+
+.btn-add:hover { background: #c1121f; }
+
+/* Botões de Administração */
+.admin-controls {
+    display: flex;
+    gap: 5px;
+    margin-top: 10px;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+}
+
+.btn-edit { background: #3498db; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+.btn-delete { background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+.btn-admin-nav {
+    background: var(--dark);
+    color: white;
+    padding: 10px;
+    text-align: center;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    display: block;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+/* Checkout Form */
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.input-group { display: flex; gap: 10px; margin-bottom: 10px; }
+input, select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    outline: none;
+}
+
+/* Modal do Carrinho */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000; /* Modais devem ficar acima do header */
+    left: 0; top: 0; width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 20px;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 15px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.close { float: right; font-size: 28px; cursor: pointer; }
+
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-subtitle {
+    font-weight: bold;
+    margin: 15px 0 10px 0;
+    color: var(--dark);
+    border-bottom: 1px solid #ddd;
+}
+
+.ingredients-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.ingredient-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: #f8f8f8;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.ingredient-item.extra {
+    justify-content: space-between;
+}
+
+.ingredient-item.extra {
+    background: #e9f5db; /* Cor verde clara para extras */
+}
+
+.qty-controls { display: flex; align-items: center; gap: 10px; }
+.qty-btn {
+    background: #ddd;
+    border: none;
+    width: 25px; height: 25px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.summary { margin-top: 20px; background: #f9f9f9; padding: 15px; border-radius: 8px; }
+.summary-line { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.total { font-size: 1.3rem; font-weight: bold; color: var(--primary); border-top: 1px solid #ddd; padding-top: 10px; }
+
+.btn-finish {
+    width: 100%;
+    background: #25d366;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-top: 15px;
+    cursor: pointer;
+}
+
+/* Configuração para Computador (Desktop) */
+@media (min-width: 769px) {
+    .sidebar {
+        position: sticky;
+        top: 115px; 
+    }
+    #checkout-form {
+        width: 380px; /* Largura fixa para o formulário na direita */
+        position: sticky;
+        top: 150px; 
+        flex-shrink: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-layout { flex-direction: column; }
+    .card { margin-top: 20px; } /* Adiciona margem apenas quando empilhado no mobile */
+    .sidebar {
+        width: 100%;
+        position: sticky;
+        top: 130px; /* Um pequeno respiro também no mobile */
+        z-index: 1050;
+        overflow-x: auto;
+        background: white;
+        white-space: nowrap;
+        padding: 10px;
+    }
+    .sidebar ul { display: flex; gap: 10px; }
+    .input-group { flex-direction: column; }
+/* Badges de Status de Pedido */
+.badge { padding: 5px 12px; border-radius: 20px; color: white; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+.bg-pendente { background-color: #6c757d; }
+.bg-confirmado { background-color: #007bff; }
+.bg-preparo { background-color: #fd7e14; }
+.bg-entrega { background-color: #6f42c1; }
+.bg-entregue { background-color: #28a745; }
+.bg-cancelado { background-color: #dc3545; }
+
+.order-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 5px solid var(--primary); }
+.order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+}
