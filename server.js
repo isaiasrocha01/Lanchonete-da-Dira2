@@ -4,7 +4,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { Pool } = require('pg');
+const mysql = require('mysql2/promise');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
@@ -12,14 +12,6 @@ require('dotenv').config();
 
 // Configurações de Negócio
 const DEFAULT_SHIPPING_PRICE = 12.00;
-
-// Configura o driver do PG para converter tipos NUMERIC/DECIMAL automaticamente para Float
-const pg = require('pg');
-pg.types.setTypeParser(1700, val => parseFloat(val));
-
-// Configura o parser de inteiros para garantir que IDs grandes não venham como string
-pg.types.setTypeParser(20, val => parseInt(val)); // int8
-pg.types.setTypeParser(23, val => parseInt(val)); // int4
 
 const app = express();
 
@@ -69,18 +61,15 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Configuração da conexão com o Banco de Dados
-const pool = new Pool({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'postgres',
+const pool = mysql.createPool({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME || 'lanchonete_dira',
-    port: process.env.DB_PORT || 5432,
-    client_encoding: 'UTF8' // Força a codificação UTF8 na conexão
-});
-
-// Garante que a comunicação com o banco use UTF8 para evitar problemas de caracteres especiais
-pool.on('connect', (client) => {
-    client.query("SET client_encoding TO 'UTF8'");
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT || 3306,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
 
 // Middleware de Autenticação JWT
@@ -140,23 +129,32 @@ app.get('/admin/pedidos', (req, res) => {
 // --- ROTAS DE CATEGORIAS ---
 app.get('/api/categories', async (req, res) => {
     try {
-        const result = await pool.query('SELECT id, name, slug FROM categories WHERE active = true ORDER BY id ASC');
-        res.json(result.rows);
+        const [rows] = await pool.query('SELECT id, name, slug FROM categories WHERE active = true ORDER BY id ASC');
+        res.json(rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
+app.get('/api/config', (req, res) => {
+    res.json({
+        whatsapp: process.env.WHATSAPP_NUMBER,
+        emailjs_key: process.env.EMAILJS_PUBLIC_KEY,
+        emailjs_service: process.env.EMAILJS_SERVICE_ID,
+        emailjs_template: process.env.EMAILJS_TEMPLATE_ID
+    });
+});
+
 // --- ROTAS DE PRODUTOS ---
 app.get('/api/products', async (req, res) => {
     try {
-        const result = await pool.query(`
+        const [rows] = await pool.query(`
             SELECT p.*, c.name as category_name, c.slug as category_slug 
             FROM products p 
             JOIN categories c ON p.category_id = c.id 
             WHERE p.active = true
         `);
-        res.json(result.rows.map(p => ({
+        res.json(rows.map(p => ({
             ...p, // Convertemos o preço de string para Number aqui
             price: Number(p.price),
             ingredients: p.ingredients || [],
@@ -198,18 +196,11 @@ app.post('/api/products', authenticateToken, isAdmin, upload.single('image_file'
         // Se houver arquivo, usa o caminho do arquivo. Se não, usa a URL fornecida.
         const finalImageUrl = req.file ? `/uploads/${req.file.filename}` : image_url;
 
-        const result = await pool.query(
-            'INSERT INTO products (category_id, name, description, price, ingredients, extras, image_url, active, available) VALUES ($1, $2, $3, $4, $5, $6, $7, true, true) RETURNING *',
+        const [result] = await pool.execute(
+            'INSERT INTO products (category_id, name, description, price, ingredients, extras, image_url, active, available) VALUES (?, ?, ?, ?, ?, ?, ?, true, true)',
             [catId, name, description, prodPrice, ingredientsJson, extrasJson, finalImageUrl]
         );
-        const product = result.rows[0];
-        res.status(201).json({
-            ...product,
-            price: Number(product.price),
-            ingredients: product.ingredients || [],
-            extras: product.extras || [],
-            image: product.image_url // Padroniza com o GET
-        });
+        res.status(201).json({ message: 'Produto criado!', id: result.insertId });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao criar produto: ' + error.message });
     }
@@ -235,12 +226,12 @@ app.put('/api/products/:id', authenticateToken, isAdmin, upload.single('image_fi
         // Se um novo arquivo foi enviado, atualiza a imagem. Caso contrário, mantém a URL antiga ou a nova URL texto.
         const finalImageUrl = req.file ? `/uploads/${req.file.filename}` : image_url;
 
-        const result = await pool.query(
-            'UPDATE products SET category_id = $1, name = $2, description = $3, price = $4, ingredients = $5, extras = $6, image_url = $7 WHERE id = $8',
+        const [result] = await pool.execute(
+            'UPDATE products SET category_id = ?, name = ?, description = ?, price = ?, ingredients = ?, extras = ?, image_url = ? WHERE id = ?',
             [catId, name, description, prodPrice, ingredientsJson, extrasJson, finalImageUrl, parseInt(id)]
         );
 
-        if (result.rowCount === 0) return res.status(404).json({ error: 'Produto não encontrado' });
+        if (result.affectedRows === 0) return res.status(404).json({ error: 'Produto não encontrado' });
         res.json({ message: 'Produto atualizado com sucesso!' });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -250,7 +241,7 @@ app.put('/api/products/:id', authenticateToken, isAdmin, upload.single('image_fi
 // Exclusão lógica de produto
 app.delete('/api/products/:id', authenticateToken, isAdmin, async (req, res) => {
     try {
-        await pool.query('UPDATE products SET active = false WHERE id = $1', [req.params.id]);
+        await pool.execute('UPDATE products SET active = false WHERE id = ?', [req.params.id]);
         res.json({ message: 'Produto removido com sucesso (exclusão lógica).' });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -261,8 +252,8 @@ app.delete('/api/products/:id', authenticateToken, isAdmin, async (req, res) => 
 app.get('/api/shipping', async (req, res) => {
     const { bairro } = req.query;
     try {
-        const result = await pool.query('SELECT price FROM shipping_rates WHERE neighborhood = $1', [bairro]);
-        if (result.rows.length > 0) res.json(result.rows[0]);
+        const [rows] = await pool.query('SELECT price FROM shipping_rates WHERE neighborhood = ?', [bairro]);
+        if (rows.length > 0) res.json(rows[0]);
         else res.json({ price: DEFAULT_SHIPPING_PRICE }); // Valor padrão se não encontrar o bairro
     } catch (error) {
         res.status(500).send(error.message);
@@ -272,8 +263,8 @@ app.get('/api/shipping', async (req, res) => {
 // --- ROTA DE PERFIL (DADOS AUTOMÁTICOS) ---
 app.get('/api/users/profile', authenticateToken, async (req, res) => {
     try {
-        const result = await pool.query('SELECT name, email, phone, cep, address, number, neighborhood, complement, reference FROM users WHERE id = $1', [req.user.id]);
-        res.json(result.rows[0]);
+        const [rows] = await pool.query('SELECT name, email, phone, cep, address, number, neighborhood, complement, reference FROM users WHERE id = ?', [req.user.id]);
+        res.json(rows[0]);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -284,8 +275,8 @@ app.post('/api/auth/register', async (req, res) => {
     const { name, username, email, password, phone, cep, address, number, neighborhood } = req.body;
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        await pool.query(
-            'INSERT INTO users (name, username, email, password, phone, cep, address, number, neighborhood) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+        await pool.execute(
+            'INSERT INTO users (name, username, email, password, phone, cep, address, number, neighborhood) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [name, username, email, hashedPassword, phone, cep, address, number, neighborhood]
         );
         res.status(201).json({ message: 'Usuário cadastrado com sucesso!' });
@@ -297,10 +288,10 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
     const { identifier, password } = req.body; // identifier pode ser email ou username
     try {
-        const result = await pool.query('SELECT * FROM users WHERE email = $1 OR username = $2', [identifier, identifier]);
-        if (result.rows.length === 0) return res.status(404).json({ error: 'Usuário não encontrado' });
+        const [rows] = await pool.query('SELECT * FROM users WHERE email = ? OR username = ?', [identifier, identifier]);
+        if (rows.length === 0) return res.status(404).json({ error: 'Usuário não encontrado' });
 
-        const user = result.rows[0];
+        const user = rows[0];
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) return res.status(401).json({ error: 'Senha incorreta' });
 
@@ -319,17 +310,18 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
     const { cart, subtotal, shippingCost, total, addressData } = req.body;
     try {
         const trackingCode = 'DIRA-' + Math.floor(100000 + Math.random() * 900000);
-        const result = await pool.query(
-            'INSERT INTO orders (user_id, subtotal, shipping_cost, total, delivery_address, tracking_code, status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+        const [result] = await pool.execute(
+            'INSERT INTO orders (user_id, subtotal, shipping_cost, total, delivery_address, tracking_code, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
             [req.user.id, subtotal, shippingCost, total, JSON.stringify(addressData), trackingCode, 'PENDENTE']
         );
-        const orderId = result.rows[0].id;
+        const orderId = result.insertId;
 
         // Insere itens do pedido
         for (const item of cart) {
-            await pool.query(
-                'INSERT INTO order_items (order_id, product_id, quantity, unit_price, customization) VALUES ($1, $2, $3, $4, $5)',
-                [orderId, item.id, item.qty, item.finalPrice, { removed: item.removedIngredients, extras: item.selectedExtras }]
+            const customization = JSON.stringify({ removed: item.removedIngredients, extras: item.selectedExtras });
+            await pool.execute(
+                'INSERT INTO order_items (order_id, product_id, quantity, unit_price, customization) VALUES (?, ?, ?, ?, ?)',
+                [orderId, item.id, item.qty, item.finalPrice, customization]
             );
         }
         res.status(201).json({ message: 'Pedido salvo!', orderId });
@@ -341,16 +333,16 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
 // Histórico do Cliente
 app.get('/api/orders/my', authenticateToken, async (req, res) => {
     try {
-        const orders = await pool.query('SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC', [req.user.id]);
+        const [orders] = await pool.query('SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC', [req.user.id]);
         
-        for (let order of orders.rows) {
-            const items = await pool.query(
-                'SELECT oi.*, p.name FROM order_items oi JOIN products p ON oi.product_id = p.id WHERE oi.order_id = $1',
+        for (let order of orders) {
+            const [items] = await pool.query(
+                'SELECT oi.*, p.name FROM order_items oi JOIN products p ON oi.product_id = p.id WHERE oi.order_id = ?',
                 [order.id]
             );
-            order.items = items.rows;
+            order.items = items;
         }
-        res.json(orders.rows);
+        res.json(orders);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -360,14 +352,14 @@ app.get('/api/orders/my', authenticateToken, async (req, res) => {
 app.get('/api/admin/orders', authenticateToken, isAdmin, async (req, res) => {
     const archived = req.query.archived === 'true';
     try {
-        const result = await pool.query(`
+        const [rows] = await pool.query(`
             SELECT o.*, u.name as user_name, u.phone as user_phone 
             FROM orders o 
             JOIN users u ON o.user_id = u.id 
-            WHERE o.archived = $1
+            WHERE o.archived = ?
             ORDER BY o.created_at DESC
-        `, [archived]);
-        res.json(result.rows);
+        `, [archived ? 1 : 0]);
+        res.json(rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -376,15 +368,15 @@ app.get('/api/admin/orders', authenticateToken, isAdmin, async (req, res) => {
 app.get('/api/admin/orders/:id', authenticateToken, isAdmin, async (req, res) => {
     try {
         const order = await pool.query(`
-            SELECT o.*, u.name as user_name, u.phone as user_phone, u.email as user_email
-            FROM orders o JOIN users u ON o.user_id = u.id WHERE o.id = $1`, [req.params.id]);
+            SELECT o.*, u.name as user_name, u.phone as user_phone, u.email as user_email 
+            FROM orders o JOIN users u ON o.user_id = u.id WHERE o.id = ?`, [req.params.id]);
         
-        const items = await pool.query(
-            'SELECT oi.*, p.name FROM order_items oi JOIN products p ON oi.product_id = p.id WHERE oi.order_id = $1',
+        const [items] = await pool.query(
+            'SELECT oi.*, p.name FROM order_items oi JOIN products p ON oi.product_id = p.id WHERE oi.order_id = ?',
             [req.params.id]
         );
         
-        res.json({ ...order.rows[0], items: items.rows });
+        res.json({ ...order[0][0], items: items });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -393,8 +385,8 @@ app.get('/api/admin/orders/:id', authenticateToken, isAdmin, async (req, res) =>
 app.put('/api/admin/orders/:id/status', authenticateToken, isAdmin, async (req, res) => {
     const { status } = req.body;
     try {
-        await pool.query(
-            'UPDATE orders SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+        await pool.execute(
+            'UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
             [status, parseInt(req.params.id)]
         );
         res.json({ message: 'Status atualizado!' });
@@ -407,8 +399,8 @@ app.put('/api/admin/orders/:id/status', authenticateToken, isAdmin, async (req, 
 app.put('/api/admin/orders/:id/tracking', authenticateToken, isAdmin, async (req, res) => {
     const { tracking_url, tracking_code } = req.body;
     try {
-        await pool.query(
-            'UPDATE orders SET tracking_url = COALESCE($1, tracking_url), tracking_code = COALESCE($2, tracking_code) WHERE id = $3',
+        await pool.execute(
+            'UPDATE orders SET tracking_url = COALESCE(?, tracking_url), tracking_code = COALESCE(?, tracking_code) WHERE id = ?',
             [tracking_url, tracking_code, parseInt(req.params.id)]
         );
         res.json({ message: 'Rastreio atualizado!' });
@@ -424,7 +416,7 @@ app.put('/api/admin/orders/:id/tracking', authenticateToken, isAdmin, async (req
 app.delete('/api/admin/orders/all', authenticateToken, isAdmin, async (req, res) => {
     try {
         // Exclui todos os pedidos. O CASCADE cuidará dos order_items se configurado no DB.
-        await pool.query('DELETE FROM orders');
+        await pool.execute('DELETE FROM orders');
         res.json({ message: 'Histórico de pedidos totalmente zerado.' });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao zerar pedidos: ' + error.message });
@@ -438,11 +430,11 @@ app.put('/api/admin/orders/:id/archive', authenticateToken, isAdmin, async (req,
     if (isNaN(orderId)) return res.status(400).json({ error: 'ID inválido' });
 
     try {
-        const result = await pool.query(
-            'UPDATE orders SET archived = $1, updated_at = NOW() WHERE id = $2 RETURNING id',
-            [archived === undefined ? true : archived, orderId]
+        const [result] = await pool.execute(
+            'UPDATE orders SET archived = ?, updated_at = NOW() WHERE id = ?',
+            [archived === undefined ? 1 : (archived ? 1 : 0), orderId]
         );
-        if (result.rowCount === 0) return res.status(404).json({ error: 'Pedido não encontrado' });
+        if (result.affectedRows === 0) return res.status(404).json({ error: 'Pedido não encontrado' });
         res.json({ message: archived ? 'Pedido arquivado' : 'Pedido restaurado' });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -455,14 +447,14 @@ app.delete('/api/admin/orders/:id', authenticateToken, isAdmin, async (req, res)
 
     try {
         // Regra de segurança: Só exclui se estiver PENDENTE
-        const check = await pool.query('SELECT status FROM orders WHERE id = $1', [orderId]);
-        if (check.rows.length === 0) return res.status(404).json({ error: 'Pedido não encontrado' });
+        const [rows] = await pool.query('SELECT status FROM orders WHERE id = ?', [orderId]);
+        if (rows.length === 0) return res.status(404).json({ error: 'Pedido não encontrado' });
         
-        if (check.rows[0].status !== 'PENDENTE') {
+        if (rows[0].status !== 'PENDENTE') {
             return res.status(400).json({ error: 'Não é possível excluir pedidos em processamento ou finalizados. Tente arquivar.' });
         }
 
-        await pool.query('DELETE FROM orders WHERE id = $1', [orderId]);
+        await pool.execute('DELETE FROM orders WHERE id = ?', [orderId]);
         res.json({ message: 'Pedido removido permanentemente.' });
     } catch (error) {
         res.status(500).json({ error: error.message });

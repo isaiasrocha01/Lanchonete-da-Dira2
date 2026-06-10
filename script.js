@@ -1,5 +1,18 @@
-// Inicialização do EmailJS (Você precisará substituir o campo abaixo pela sua Public Key)
-emailjs.init("xaFurKAu6y-pkVsqe");
+let appConfig = {};
+
+// Carrega configurações do servidor
+async function loadConfig() {
+    try {
+        const res = await fetch('/api/config');
+        appConfig = await res.json();
+        if (appConfig.emailjs_key) {
+            emailjs.init(appConfig.emailjs_key);
+        }
+    } catch (err) {
+        console.error("Erro ao carregar configurações:", err);
+    }
+}
+loadConfig();
 
 const API_URL = "/api";
 const token = localStorage.getItem('token');
@@ -515,7 +528,9 @@ Obrigado!`);
                 valor_total: total.toFixed(2),
                 destinatario: 'isaiasrocha.dev@outlook.com'
             };
-            emailjs.send("service_ch627pj", "template_0sxh2pk", emailParams).catch(e => console.error("Erro EmailJS:", e));
+            if(appConfig.emailjs_service) {
+                emailjs.send(appConfig.emailjs_service, appConfig.emailjs_template, emailParams).catch(e => console.error("Erro EmailJS:", e));
+            }
 
             // 1. Limpa o carrinho
             cart = [];
@@ -524,8 +539,8 @@ Obrigado!`);
             // 2. Fecha o modal do carrinho
             document.getElementById('cart-modal').style.display = 'none';
 
-            // 3. Abre o WhatsApp para o cliente
-            const whatsappUrl = `https://wa.me/5571987792252?text=${mensagem}`;
+            // 3. Abre o WhatsApp para o cliente usando o número da config
+            const whatsappUrl = `https://wa.me/${appConfig.whatsapp || '5571987792252'}?text=${mensagem}`;
             window.open(whatsappUrl, '_blank');
 
         } else if (res.status === 401 || res.status === 403) {

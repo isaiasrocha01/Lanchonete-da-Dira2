@@ -3,3 +3,6 @@ database.sql
 node_modules/
 logs/
 *.log
+uploads/*
+!uploads/.gitkeep
+database.sql
