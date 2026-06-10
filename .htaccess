@@ -1,0 +1,14 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Exclui arquivos e diretórios existentes da reescrita
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Exclui rotas de API (que começam com /api/) da reescrita
+  RewriteRule ^api/ - [L]
+
+  # Redireciona todas as outras requisições para index.html (fallback da SPA)
+  RewriteRule ^ index.html [L]
+</IfModule>

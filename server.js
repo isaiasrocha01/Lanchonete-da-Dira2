@@ -10,6 +10,12 @@ const multer = require('multer');
 const fs = require('fs');
 require('dotenv').config();
 
+// Validação Crítica de Ambiente
+if (!process.env.JWT_SECRET) {
+    console.error("ERRO FATAL: JWT_SECRET não definida no arquivo .env");
+    process.exit(1);
+}
+
 // Configurações de Negócio
 const DEFAULT_SHIPPING_PRICE = 12.00;
 
@@ -72,6 +78,14 @@ const pool = mysql.createPool({
     queueLimit: 0
 });
 
+// Testar conexão com o banco de dados na inicialização
+pool.getConnection()
+    .then(conn => {
+        console.log("✅ Conexão com o Banco de Dados MySQL estabelecida com sucesso!");
+        conn.release();
+    })
+    .catch(err => console.error("❌ Falha crítica: Não foi possível conectar ao MySQL. Verifique se o banco está rodando e se o DB_HOST no .env está correto. Detalhe:", err.message));
+
 // Middleware de Autenticação JWT
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -95,6 +109,9 @@ const isAdmin = (req, res, next) => {
 // Servir a pasta de uploads como estática para que as imagens fiquem acessíveis
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/img', express.static(path.join(__dirname, 'img')));
+
+// Rota para evitar erro 404 do favicon no navegador
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 // Middleware para impedir o acesso direto a qualquer arquivo .html pela URL
 app.use((req, res, next) => {
@@ -132,6 +149,7 @@ app.get('/api/categories', async (req, res) => {
         const [rows] = await pool.query('SELECT id, name, slug FROM categories WHERE active = true ORDER BY id ASC');
         res.json(rows);
     } catch (error) {
+        console.error("Erro ao buscar categorias:", error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -155,7 +173,7 @@ app.get('/api/products', async (req, res) => {
             WHERE p.active = true
         `);
         res.json(rows.map(p => ({
-            ...p, // Convertemos o preço de string para Number aqui
+            ...p,
             price: Number(p.price),
             ingredients: p.ingredients || [],
             extras: p.extras || [],
@@ -163,7 +181,8 @@ app.get('/api/products', async (req, res) => {
             category: p.category_slug, // Usamos o slug para bater com os IDs do HTML
             category_name: p.category_name
         })));
-    } catch (error) {
+    } catch (error) { // Mantém o retorno da mensagem de erro para o cliente, mas adiciona log interno
+        console.error("Erro ao buscar produtos:", error);
         res.status(500).send(error.message);
     }
 });
@@ -173,7 +192,7 @@ app.get('/api/images', authenticateToken, isAdmin, (req, res) => {
     fs.readdir(uploadDir, (err, files) => {
         if (err) return res.status(500).json({ error: 'Erro ao listar imagens' });
         const imageUrls = files.map(file => `/uploads/${file}`);
-        res.json(imageUrls);
+        res.json(imageUrls); // Não há catch para fs.readdir, o erro é tratado no if (err)
     });
 });
 
@@ -202,7 +221,8 @@ app.post('/api/products', authenticateToken, isAdmin, upload.single('image_file'
         );
         res.status(201).json({ message: 'Produto criado!', id: result.insertId });
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao criar produto: ' + error.message });
+        console.error("Erro ao criar produto:", error); // Adiciona log detalhado
+        res.status(500).json({ error: 'Erro ao criar produto: ' + error.message }); // Mantém a mensagem original para o cliente
     }
 });
 
@@ -233,7 +253,8 @@ app.put('/api/products/:id', authenticateToken, isAdmin, upload.single('image_fi
 
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Produto não encontrado' });
         res.json({ message: 'Produto atualizado com sucesso!' });
-    } catch (error) {
+    } catch (error) { // Adiciona log detalhado
+        console.error("Erro ao atualizar produto:", error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -243,7 +264,8 @@ app.delete('/api/products/:id', authenticateToken, isAdmin, async (req, res) => 
     try {
         await pool.execute('UPDATE products SET active = false WHERE id = ?', [req.params.id]);
         res.json({ message: 'Produto removido com sucesso (exclusão lógica).' });
-    } catch (error) {
+    } catch (error) { // Adiciona log detalhado
+        console.error("Erro ao remover produto (exclusão lógica):", error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -255,7 +277,8 @@ app.get('/api/shipping', async (req, res) => {
         const [rows] = await pool.query('SELECT price FROM shipping_rates WHERE neighborhood = ?', [bairro]);
         if (rows.length > 0) res.json(rows[0]);
         else res.json({ price: DEFAULT_SHIPPING_PRICE }); // Valor padrão se não encontrar o bairro
-    } catch (error) {
+    } catch (error) { // Adiciona log detalhado
+        console.error("Erro ao buscar frete:", error);
         res.status(500).send(error.message);
     }
 });
@@ -265,7 +288,8 @@ app.get('/api/users/profile', authenticateToken, async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT name, email, phone, cep, address, number, neighborhood, complement, reference FROM users WHERE id = ?', [req.user.id]);
         res.json(rows[0]);
-    } catch (error) {
+    } catch (error) { // Adiciona log detalhado
+        console.error("Erro ao buscar perfil do usuário:", error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -280,8 +304,14 @@ app.post('/api/auth/register', async (req, res) => {
             [name, username, email, hashedPassword, phone, cep, address, number, neighborhood]
         );
         res.status(201).json({ message: 'Usuário cadastrado com sucesso!' });
-    } catch (error) {
-        res.status(400).json({ error: 'Erro ao cadastrar. E-mail ou usuário já existem.' });
+    } catch (error) { // Adiciona log detalhado para o erro de cadastro
+        console.error("Erro ao cadastrar usuário:", error);
+        
+        // Se o erro for de duplicidade no MySQL (ER_DUP_ENTRY)
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(400).json({ error: 'E-mail ou nome de usuário já em uso.' });
+        }
+        res.status(500).json({ error: 'Erro interno no banco de dados: ' + (error.message || 'Sem mensagem') });
     }
 });
 
@@ -295,13 +325,14 @@ app.post('/api/auth/login', async (req, res) => {
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) return res.status(401).json({ error: 'Senha incorreta' });
 
-        const token = jwt.sign({ id: user.id, role: user.role, name: user.name }, process.env.JWT_SECRET, { expiresIn: '10m' });
+        const token = jwt.sign({ id: user.id, role: user.role, name: user.name }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         // Retorna dados do usuário (exceto senha) e o token
         const { password: _, ...userWithoutPassword } = user;
         res.json({ token, user: userWithoutPassword });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+    } catch (error) { // Adiciona log detalhado para o erro de login
+        console.error("Erro ao fazer login:", error);
+        res.status(500).json({ error: error.message || 'Erro desconhecido no servidor' });
     }
 });
 
@@ -325,7 +356,8 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
             );
         }
         res.status(201).json({ message: 'Pedido salvo!', orderId });
-    } catch (error) {
+    } catch (error) { // Adiciona log detalhado
+        console.error("Erro ao salvar pedido:", error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -343,7 +375,8 @@ app.get('/api/orders/my', authenticateToken, async (req, res) => {
             order.items = items;
         }
         res.json(orders);
-    } catch (error) {
+    } catch (error) { // Adiciona log detalhado
+        console.error("Erro ao buscar pedidos do usuário:", error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -360,7 +393,8 @@ app.get('/api/admin/orders', authenticateToken, isAdmin, async (req, res) => {
             ORDER BY o.created_at DESC
         `, [archived ? 1 : 0]);
         res.json(rows);
-    } catch (error) {
+    } catch (error) { // Adiciona log detalhado
+        console.error("Erro ao buscar pedidos do admin:", error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -377,7 +411,8 @@ app.get('/api/admin/orders/:id', authenticateToken, isAdmin, async (req, res) =>
         );
         
         res.json({ ...order[0][0], items: items });
-    } catch (error) {
+    } catch (error) { // Adiciona log detalhado
+        console.error("Erro ao buscar detalhes do pedido do admin:", error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -404,7 +439,8 @@ app.put('/api/admin/orders/:id/tracking', authenticateToken, isAdmin, async (req
             [tracking_url, tracking_code, parseInt(req.params.id)]
         );
         res.json({ message: 'Rastreio atualizado!' });
-    } catch (error) {
+    } catch (error) { // Adiciona log detalhado
+        console.error("Erro ao atualizar rastreio:", error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -418,7 +454,8 @@ app.delete('/api/admin/orders/all', authenticateToken, isAdmin, async (req, res)
         // Exclui todos os pedidos. O CASCADE cuidará dos order_items se configurado no DB.
         await pool.execute('DELETE FROM orders');
         res.json({ message: 'Histórico de pedidos totalmente zerado.' });
-    } catch (error) {
+    } catch (error) { // Adiciona log detalhado
+        console.error("Erro ao zerar pedidos:", error);
         res.status(500).json({ error: 'Erro ao zerar pedidos: ' + error.message });
     }
 });
@@ -436,7 +473,8 @@ app.put('/api/admin/orders/:id/archive', authenticateToken, isAdmin, async (req,
         );
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Pedido não encontrado' });
         res.json({ message: archived ? 'Pedido arquivado' : 'Pedido restaurado' });
-    } catch (error) {
+    } catch (error) { // Adiciona log detalhado
+        console.error("Erro ao arquivar/restaurar pedido:", error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -456,8 +494,23 @@ app.delete('/api/admin/orders/:id', authenticateToken, isAdmin, async (req, res)
 
         await pool.execute('DELETE FROM orders WHERE id = ?', [orderId]);
         res.json({ message: 'Pedido removido permanentemente.' });
-    } catch (error) {
+    } catch (error) { // Adiciona log detalhado
+        console.error("Erro ao remover pedido permanentemente:", error);
         res.status(500).json({ error: error.message });
+    }
+});
+
+// Catch-all para rotas não encontradas (SPA fallback)
+// Isso deve vir DEPOIS de TODAS as rotas de API e arquivos estáticos/HTML específicos.
+app.get('*', (req, res) => {
+    // A condição req.accepts('html') garante que apenas requisições de navegador
+    // que esperam HTML sejam redirecionadas para index.html, evitando que
+    // chamadas de API para rotas inexistentes retornem o HTML da página.
+    if (req.accepts('html')) {
+        res.sendFile(path.join(__dirname, 'index.html'));
+    } else {
+        // Para requisições que não esperam HTML (ex: API calls para rotas inexistentes)
+        res.status(404).json({ error: 'Recurso não encontrado.' });
     }
 });
 
